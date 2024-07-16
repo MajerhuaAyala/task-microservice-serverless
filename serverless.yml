@@ -1,5 +1,4 @@
 service: serverless-cognito-auth
-
 provider:
   name: aws
   runtime: nodejs20.x
@@ -11,9 +10,9 @@ provider:
       Fn::GetAtt:
         - MyDB
         - Endpoint.Address
-    db_username: { Ref: DBUsername }
-    db_password: { Ref: DBPassword }
-    db_name: { Ref: DBName }
+    db_username: ${ssm:/username-mysql}
+    db_password: ${ssm:/password-mysql}
+    db_name: mydatabase
   role: arn:aws:iam::905418036958:role/deployAdministratorRole
 
 layers:
@@ -61,18 +60,26 @@ functions:
           method: post
           cors: true
 
-resources:
-  Parameters:
-    DBUsername:
-      Type: String
-      Default: admin
-    DBPassword:
-      Type: String
-      Default: password
-    DBName:
-      Type: String
-      Default: mydatabase
+  getTask:
+    handler: task/getTask.handler
+    layers:
+      - { Ref: TaskLayerLambdaLayer }
+    events:
+      - http:
+          path: task
+          method: get
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - UserPool
+                - Arn
+            claims:
+              - email
 
+resources:
   Resources:
     UserPool:
       Type: AWS::Cognito::UserPool
@@ -104,10 +111,10 @@ resources:
         AllocatedStorage: 20
         DBInstanceClass: db.t3.micro
         Engine: mysql
-        MasterUsername: { Ref: DBUsername }
-        MasterUserPassword: { Ref: DBPassword }
+        MasterUsername: ${ssm:/username-mysql}
+        MasterUserPassword: ${ssm:/password-mysql}
         PubliclyAccessible: true
-        DBName: { Ref: DBName }
+        DBName: mydatabase
         VPCSecurityGroups:
           - Fn::GetAtt: [MySecurityGroup, GroupId]
         DBSubnetGroupName:

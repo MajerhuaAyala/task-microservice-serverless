@@ -12,7 +12,9 @@
   "description": "",
   "devDependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.614.0",
-    "serverless-offline": "^13.6.0"
+    "@aws-sdk/client-rds-data": "^3.614.0",
+    "serverless-offline": "^13.6.0",
+    "serverless-ssm-fetch": "^2.0.0"
   },
   "dependencies": {
     "mysql2": "^3.10.3"
