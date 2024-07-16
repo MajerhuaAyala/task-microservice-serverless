@@ -3,14 +3,48 @@ service: serverless-cognito-auth
 provider:
   name: aws
   runtime: nodejs20.x
+  stage: ${opt:stage}
   environment:
     user_pool_id: { Ref: UserPool }
     client_id: { Ref: UserClient }
+    host_url:
+      Fn::GetAtt:
+        - MyDB
+        - Endpoint.Address
+    db_username: { Ref: DBUsername }
+    db_password: { Ref: DBPassword }
+    db_name: { Ref: DBName }
   role: arn:aws:iam::905418036958:role/deployAdministratorRole
+
+layers:
+  TaskLayer:
+    name: ${self:service}-${self:provider.stage}-dependencies
+    path: layers
+    description: "Node modules for  task"
+    compatibleRuntimes:
+      - nodejs20.x
+    package:
+      exclude:
+        - "!nodejs/node_modules/**"
+
+package:
+  exclude:
+    - scripts/**
+    - node_modules/**
+    - layers/**
+    - package.json
+    - package-lock.json
+    - "*.md"
+    - "env.*"
+    - scannerwork/
+    - sonar-project.properties
+  individually: true
 
 functions:
   loginUser:
     handler: user/login.handler
+    layers:
+      - { Ref: TaskLayerLambdaLayer }
     events:
       - http:
           path: user/login
@@ -19,6 +53,8 @@ functions:
 
   signupUser:
     handler: user/signup.handler
+    layers:
+      - { Ref: TaskLayerLambdaLayer }
     events:
       - http:
           path: user/signup
@@ -26,6 +62,17 @@ functions:
           cors: true
 
 resources:
+  Parameters:
+    DBUsername:
+      Type: String
+      Default: admin
+    DBPassword:
+      Type: String
+      Default: password
+    DBName:
+      Type: String
+      Default: mydatabase
+
   Resources:
     UserPool:
       Type: AWS::Cognito::UserPool
@@ -50,6 +97,41 @@ resources:
         IdTokenValidity: 5
         ExplicitAuthFlows:
           - "ADMIN_NO_SRP_AUTH"
+    MyDB:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        DBInstanceIdentifier: test
+        AllocatedStorage: 20
+        DBInstanceClass: db.t3.micro
+        Engine: mysql
+        MasterUsername: { Ref: DBUsername }
+        MasterUserPassword: { Ref: DBPassword }
+        PubliclyAccessible: true
+        DBName: { Ref: DBName }
+        VPCSecurityGroups:
+          - Fn::GetAtt: [MySecurityGroup, GroupId]
+        DBSubnetGroupName:
+          Ref: MyDBSubnetGroup
+
+    MySecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Enable access to RDS instance
+        VpcId: vpc-080dc6ccaa6d7f855
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 3306
+            ToPort: 3306
+            CidrIp: 0.0.0.0/0
+
+    MyDBSubnetGroup:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+        DBSubnetGroupDescription: Subnet group for RDS instance
+        SubnetIds:
+          - subnet-06a1a5907172686fc
+          - subnet-0c7ca196b20cf73ba
+          - subnet-0c9bf069930fc4930
 
 plugins:
   - serverless-offline
