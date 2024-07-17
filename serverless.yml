@@ -12,7 +12,7 @@ provider:
         - Endpoint.Address
     db_username: ${ssm:/username-mysql}
     db_password: ${ssm:/password-mysql}
-    db_name: mydatabase
+    db_name: ${ssm:/databasename_mysql}
   role: arn:aws:iam::905418036958:role/deployAdministratorRole
 
 layers:
@@ -111,10 +111,10 @@ resources:
         AllocatedStorage: 20
         DBInstanceClass: db.t3.micro
         Engine: mysql
-        MasterUsername: ${ssm:/username-mysql}
-        MasterUserPassword: ${ssm:/password-mysql}
+        MasterUsername: ${self:provider.environment.db_username}
+        MasterUserPassword: ${self:provider.environment.db_password}
         PubliclyAccessible: true
-        DBName: mydatabase
+        DBName: ${self:provider.environment.db_name}
         VPCSecurityGroups:
           - Fn::GetAtt: [MySecurityGroup, GroupId]
         DBSubnetGroupName:
