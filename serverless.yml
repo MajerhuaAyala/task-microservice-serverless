@@ -118,6 +118,13 @@ functions:
             claims:
               - email
 
+  snsEmailHandler:
+    handler: task/updateTaskSenderEmail.handler
+    events:
+      - sns:
+          arn: !Ref MySNSTopic
+          topicName: updateTask
+
 resources:
   Resources:
     UserPool:
@@ -178,6 +185,12 @@ resources:
           - subnet-06a1a5907172686fc
           - subnet-0c7ca196b20cf73ba
           - subnet-0c9bf069930fc4930
+
+    MySNSTopic:
+      Type: "AWS::SNS::Topic"
+      Properties:
+        TopicName: "updateTask"
+
 
 plugins:
   - serverless-offline
