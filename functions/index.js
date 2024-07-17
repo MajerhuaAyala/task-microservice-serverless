@@ -1,5 +1,5 @@
 const sendResponse = (statusCode, body) => {
-    const response = {
+    return {
         statusCode: statusCode,
         body: JSON.stringify(body),
         headers: {
@@ -8,7 +8,6 @@ const sendResponse = (statusCode, body) => {
             'Access-Control-Allow-Credentials': true
         }
     }
-    return response
 }
 
 const validateInput = (data) => {

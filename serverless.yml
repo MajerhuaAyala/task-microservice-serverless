@@ -6,10 +6,11 @@ provider:
   environment:
     user_pool_id: { Ref: UserPool }
     client_id: { Ref: UserClient }
-    host_url:
-      Fn::GetAtt:
-        - MyDB
-        - Endpoint.Address
+    #host_url:
+      #Fn::GetAtt:
+        #- MyDB
+        #- Endpoint.Address
+    host_url: test.cl0g4qs003x8.us-east-2.rds.amazonaws.com
     db_username: ${ssm:/username-mysql}
     db_password: ${ssm:/password-mysql}
     db_name: ${ssm:/databasename_mysql}
@@ -68,6 +69,44 @@ functions:
       - http:
           path: task
           method: get
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - UserPool
+                - Arn
+            claims:
+              - email
+
+  createTask:
+    handler: task/createTask.handler
+    layers:
+      - { Ref: TaskLayerLambdaLayer }
+    events:
+      - http:
+          path: task
+          method: post
+          cors: true
+          authorizer:
+            name: PrivateAuthorizer
+            type: COGNITO_USER_POOLS
+            arn:
+              Fn::GetAtt:
+                - UserPool
+                - Arn
+            claims:
+              - email
+
+  updateTask:
+    handler: task/updateTask.handler
+    layers:
+      - { Ref: TaskLayerLambdaLayer }
+    events:
+      - http:
+          path: task
+          method: put
           cors: true
           authorizer:
             name: PrivateAuthorizer
