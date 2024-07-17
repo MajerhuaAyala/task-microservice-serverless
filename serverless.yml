@@ -6,10 +6,10 @@ provider:
   environment:
     user_pool_id: { Ref: UserPool }
     client_id: { Ref: UserClient }
-    #host_url:
+      #host_url:
       #Fn::GetAtt:
-        #- MyDB
-        #- Endpoint.Address
+      #- MyDB
+    #- Endpoint.Address
     host_url: test.cl0g4qs003x8.us-east-2.rds.amazonaws.com
     db_username: ${ssm:/username-mysql}
     db_password: ${ssm:/password-mysql}
@@ -67,7 +67,7 @@ functions:
       - { Ref: TaskLayerLambdaLayer }
     events:
       - http:
-          path: task
+          path: task/{id}
           method: get
           cors: true
           authorizer:
@@ -105,7 +105,7 @@ functions:
       - { Ref: TaskLayerLambdaLayer }
     events:
       - http:
-          path: task
+          path: task/{id}
           method: put
           cors: true
           authorizer:
@@ -131,7 +131,7 @@ resources:
         Policies:
           PasswordPolicy:
             MinimumLength: 6
-        AutoVerifiedAttributes: ["email"]
+        AutoVerifiedAttributes: [ "email" ]
 
     UserClient:
       Type: AWS::Cognito::UserPoolClient
@@ -155,7 +155,7 @@ resources:
         PubliclyAccessible: true
         DBName: ${self:provider.environment.db_name}
         VPCSecurityGroups:
-          - Fn::GetAtt: [MySecurityGroup, GroupId]
+          - Fn::GetAtt: [ MySecurityGroup, GroupId ]
         DBSubnetGroupName:
           Ref: MyDBSubnetGroup
 
